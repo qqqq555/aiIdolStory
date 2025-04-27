@@ -1,0 +1,85 @@
+<!-- templates/play.html -->
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>播放 - {{ video_name }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+
+        .video-container {
+            width: 100%;
+            max-width: 800px;
+            margin: 20px auto;
+            background-color: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        video {
+            width: 100%;
+            display: block;
+        }
+
+        .back-btn {
+            display: inline-block;
+            background-color: #2196F3;
+            color: white;
+            padding: 10px 15px;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+
+        .video-info {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+
+<body>
+    <h1>播放视频</h1>
+
+    <div class="video-container">
+        <video controls autoplay>
+            <source src="{{ video_url }}" type="video/mp4">
+            您的浏览器不支持HTML5视频播放。
+        </video>
+    </div>
+
+    <div class="video-info">
+        <h2>{{ video_name }}</h2>
+        <p>直接从S3存储桶加载的MP4视频</p>
+    </div>
+
+    <a href="{{ url_for('index') }}" class="back-btn">返回视频列表</a>
+
+    <script>
+        // 视频结束后自动返回列表
+        document.querySelector('video').addEventListener('ended', function () {
+            setTimeout(function () {
+                window.location.href = "{{ url_for('index') }}";
+            }, 3000); // 3秒后返回
+        });
+    </script>
+</body>
+
+</html>

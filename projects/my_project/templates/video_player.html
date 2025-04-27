@@ -1,0 +1,245 @@
+<!-- templates/video_player.html -->
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>影片播放器</title>
+    <style>
+        body {
+            font-family: "Microsoft JhengHei", "微軟正黑體", Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: #fff;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+
+        .video-section {
+            width: 100%;
+            height: 70vh;
+            /* 減小影片高度至畫面的一半 */
+            margin-bottom: 15px;
+        }
+
+        .video-container {
+            width: 100%;
+            height: calc(100% - 30px);
+            /* 考慮到標題的高度 */
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: #111;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            /* 保持視頻比例，不裁剪 */
+            display: block;
+            background-color: #000;
+        }
+
+        .dialogue-section {
+            width: 100%;
+            height: calc(50vh - 30px);
+            /* 剩餘空間給對白區域 */
+            padding: 15px;
+            background-color: #111;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .dialogue-content {
+            flex-grow: 1;
+            overflow-y: auto;
+            /* 如果文字太多允許捲動 */
+            margin-bottom: 15px;
+        }
+
+        .dialogue-text {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #f0f0f0;
+        }
+
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            padding-top: 10px;
+            border-top: 1px solid #333;
+        }
+
+        .next-btn {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 15px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        .prev-btn {
+            background-color: #607D8B;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 15px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        .next-btn:hover {
+            background-color: #3e8e41;
+        }
+
+        .prev-btn:hover {
+            background-color: #546E7A;
+        }
+
+        .disabled {
+            background-color: #333;
+            color: #666;
+            cursor: not-allowed;
+        }
+
+        .disabled:hover {
+            background-color: #333;
+        }
+
+        .progress {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 14px;
+            color: #999;
+        }
+
+        h1 {
+            margin-top: 0;
+            color: #4CAF50;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+            font-size: 1.4rem;
+        }
+
+        .video-title {
+            font-size: 1rem;
+            margin: 5px 0;
+            text-align: center;
+            color: #ccc;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="video-section">
+            <div class="video-container">
+                <!-- 添加muted屬性以提高自動播放成功率 -->
+                <video id="videoPlayer" controls autoplay muted playsinline>
+                    <source src="{{ current_video.url }}" type="video/mp4">
+                </video>
+            </div>
+        </div>
+
+        <div class="dialogue-section">
+            <h1>對白</h1>
+            <div class="dialogue-content">
+                <div class="dialogue-text">
+                    {{ current_video.dialogue }}
+                </div>
+            </div>
+            <div class="navigation">
+                {% if video_index > 0 %}
+                <a href="{{ url_for('show_video', index=video_index-1) }}" class="prev-btn">上一部</a>
+                {% else %}
+                <button class="prev-btn disabled">上一部</button>
+                {% endif %}
+
+                {% if video_index < total_videos - 1 %} <a href="{{ url_for('show_video', index=video_index+1) }}"
+                    class="next-btn">下一步</a>
+                    {% else %}
+                    <button class="next-btn disabled">完成</button>
+                    {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 確保視頻自動播放
+        document.addEventListener('DOMContentLoaded', function () {
+            var video = document.getElementById('videoPlayer');
+
+            // 嘗試強制自動播放
+            function attemptPlay() {
+                // 嘗試自動播放
+                var playPromise = video.play();
+
+                if (playPromise !== undefined) {
+                    playPromise.then(function () {
+                        // 自動播放成功
+                        console.log('自動播放成功');
+
+                        // 如果初始設為靜音，在播放成功後可以選擇取消靜音
+                        setTimeout(function () {
+                            video.muted = false;
+                        }, 1000);
+
+                    }).catch(function (error) {
+                        // 自動播放被阻擋
+                        console.log('自動播放被阻擋:', error);
+
+                        // 添加用戶交互事件監聽器來啟動播放
+                        document.addEventListener('click', function () {
+                            video.play();
+                            // 嘗試取消靜音
+                            video.muted = false;
+                        }, { once: true });
+                    });
+                }
+            }
+
+            // 立即嘗試播放
+            attemptPlay();
+
+            // 作為備份，也在 loadeddata 事件中嘗試播放
+            video.addEventListener('loadeddata', function () {
+                attemptPlay();
+            });
+
+            // 視頻結束後自動跳轉到下一個
+            video.addEventListener('ended', function () {
+                var nextVideoUrl = "{{ url_for('show_video', index=video_index+1) if video_index < total_videos - 1 else '#' }}";
+                if (nextVideoUrl !== "#") {
+                    window.location.href = nextVideoUrl;
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
